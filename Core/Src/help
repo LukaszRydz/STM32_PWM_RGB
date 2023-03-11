@@ -1,0 +1,58 @@
+// ---------------------------------- PROGRAM ZEWNĘTRZNY DO TWORZENIA RAMKI Z CRC ----------------------------------
+
+#include <stdio.h>
+
+void init_crc_table();
+unsigned int crc(unsigned char *data, unsigned int length);
+unsigned int crc_table[256];
+
+void init_crc_table() {
+    unsigned int crc;
+    for (int i = 0; i < 256; i++) {
+        crc = i;
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x0001) {
+                crc = (crc >> 1) ^ 0xA001;
+            } else {
+                crc = crc >> 1;
+            }
+        }
+        crc_table[i] = crc;
+    }
+}
+
+unsigned int crc(unsigned char *data, unsigned int length) {
+    unsigned int crc = 0xFFFF;
+    for (unsigned int i = 0; i < length; i++) {
+        crc = (crc >> 8) ^ crc_table[(crc ^ data[i]) & 0xFF];
+    }
+    return crc & 0xFFFF;
+}
+
+int main(){
+    unsigned char commandFull[] = "NUMCOLOR(1000,1000,1000))\0";
+    int maxCmdLen = 0;
+    while (commandFull[maxCmdLen] != '\0') maxCmdLen++;
+    init_crc_table();
+	unsigned int crc_value = crc(commandFull, maxCmdLen) % 999;
+    printf("@PC1:STM:%d:%s:%d$", maxCmdLen, commandFull, crc_value);
+    return 0;
+}
+
+Przykładowe komendy:
+@PC1:STM:016:TXTEFFCT(POLICE):477$
+@PC1:STM:016:TXTEFFCT(BREATH):297$
+@PC1:STM:015:TXTEFFCT(HEART):132$
+@PC1:STM:015:TXTEFFCT(DISCO):599$
+@PC1:STM:018:TXTEFFCT(BLINKING):257$
+@PC1:STM:016:TXTEFFCT(RANDOM):244$
+
+// STANY
+@PC1:STM:012:TXTRGBST(ON):260$
+@PC1:STM:013:TXTRGBST(OFF):645$
+@PC1:STM:011:NUMBRGHT(2):239$
+@PC1:STM:012:NUMBRGHT(70):144$
+@PC1:STM:013:NUMBRGHT(100):577$
+
+// KOLORY
+@PC1:STM:016:TXTCOLOR(YELLOW):050$
